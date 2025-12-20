@@ -1,0 +1,22 @@
+-- KOOGWE Pending Migrations
+-- Purpose: Only include statements that must be re-applied on the remote DB.
+-- NOTE: The previous migration failed due to seeding rides with NULL user_id/driver_id.
+-- ACTION REQUIRED: Remove or replace any seed blocks that reference auth.users by hard-coded emails.
+-- Use the safe conditional pattern below if you truly need demo rows:
+--
+-- with u as (
+--   select id from auth.users where email = 'passenger@example.com'
+-- ), d as (
+--   select id from auth.users where email = 'driver1@example.com'
+-- )
+-- insert into public.rides (
+--   user_id, driver_id, pickup_text, dropoff_text, vehicle_type, status,
+--   estimated_price, distance_m, duration_s, fare
+-- )
+-- select u.id, d.id, '123 Main St', '456 Oak Ave', 'comfort', 'completed',
+--        25.50, 5000, 600, 24.99
+-- from u, d; -- Inserts 0 rows if either user is missing (no NOT NULL violation)
+
+-- No executable statements here; schema is defined in:
+--   - lib/supabase/supabase_tables.sql
+--   - lib/supabase/supabase_policies.sql

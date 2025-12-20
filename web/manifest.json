@@ -1,0 +1,23 @@
+{
+    "name": "KOOGWE Transport",
+    "short_name": "KOOGWE",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0A0E1A",
+    "theme_color": "#00C853",
+    "description": "KOOGWE — Mobilité intelligente: VTC, covoiturage, livraison.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "assets/icons/koogwe.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icons/koogwe.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
