@@ -29,24 +29,121 @@ class _FamilyModeScreenState extends ConsumerState<FamilyModeScreen> {
 
   Future<void> _addMember() async {
     if (_nameController.text.isEmpty || _emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Veuillez remplir tous les champs'),
+            backgroundColor: KoogweColors.error,
+          ),
+        );
+      }
       return;
     }
 
     final success = await ref.read(familyModeProvider.notifier).addMember(
-      name: _nameController.text,
-      email: _emailController.text,
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
       role: _selectedRole,
     );
 
-    if (success && mounted) {
-      _nameController.clear();
-      _emailController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Membre ajouté avec succès')),
+    if (mounted) {
+      if (success) {
+        _nameController.clear();
+        _emailController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Membre ajouté avec succès. Une invitation sera envoyée.'),
+            backgroundColor: KoogweColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Erreur lors de l\'ajout du membre. Veuillez réessayer.'),
+            backgroundColor: KoogweColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showActivateDialog(BuildContext dialogContext) async {
+    final budgetController = TextEditingController();
+    final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+
+    final result = await showDialog<double>(
+      context: dialogContext,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? KoogweColors.darkSurface : KoogweColors.lightSurface,
+        title: Text(
+          'Activer le mode famille',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            color: isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Définissez un budget mensuel pour votre famille',
+              style: GoogleFonts.inter(
+                color: isDark ? KoogweColors.darkTextSecondary : KoogweColors.lightTextSecondary,
+              ),
+            ),
+            const SizedBox(height: KoogweSpacing.lg),
+            TextField(
+              controller: budgetController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Budget mensuel (€)',
+                prefixIcon: const Icon(Icons.euro),
+                border: OutlineInputBorder(
+                  borderRadius: KoogweRadius.mdRadius,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final budget = double.tryParse(budgetController.text);
+              if (budget != null && budget > 0) {
+                Navigator.of(context).pop(budget);
+              }
+            },
+            child: const Text('Activer'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && mounted) {
+      final success = await ref.read(familyModeProvider.notifier).activateFamilyMode(
+        monthlyBudget: result,
       );
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      if (success) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Mode famille activé avec un budget de ${result.toStringAsFixed(2)}€/mois'),
+            backgroundColor: KoogweColors.success,
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text('Erreur lors de l\'activation. Veuillez réessayer.'),
+            backgroundColor: KoogweColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -62,10 +159,39 @@ class _FamilyModeScreenState extends ConsumerState<FamilyModeScreen> {
         actions: [
           if (!state.isActive)
             TextButton(
-              onPressed: () {
-                // TODO: Activer le mode famille
-              },
+              onPressed: () => _showActivateDialog(context),
               child: const Text('Activer'),
+            )
+          else
+            TextButton(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Désactiver le mode famille'),
+                    content: const Text(
+                      'Êtes-vous sûr de vouloir désactiver le mode famille ? Les membres ne pourront plus utiliser le compte partagé.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Annuler'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: KoogweColors.error,
+                        ),
+                        child: const Text('Désactiver'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true && mounted) {
+                  await ref.read(familyModeProvider.notifier).deactivateFamilyMode();
+                }
+              },
+              child: const Text('Désactiver'),
             ),
         ],
       ),

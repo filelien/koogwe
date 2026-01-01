@@ -98,9 +98,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: KoogweSpacing.lg),
-            // Hero animation at top of onboarding
-            const KoogweHeroAnimation(height: 180, showVehicle: false),
+            const SizedBox(height: KoogweSpacing.md),
+            // Hero animation at top of onboarding - Réduit encore plus pour petits écrans
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isSmallScreen = constraints.maxHeight < 700;
+                return KoogweHeroAnimation(
+                  height: isSmallScreen ? 40 : 60,
+                  showVehicle: false,
+                );
+              },
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -186,48 +194,62 @@ class OnboardingPageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 700;
     
     return Padding(
-               padding: const EdgeInsets.all(KoogweSpacing.xxl),
+               padding: EdgeInsets.all(isSmallScreen ? KoogweSpacing.lg : KoogweSpacing.xl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: page.color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(
-                page.icon,
-                size: 100,
-                color: page.color,
-              ),
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-          const SizedBox(height: KoogweSpacing.xxxl),
-          Text(
-            page.title,
-            style: GoogleFonts.inter(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
-          const SizedBox(height: KoogweSpacing.lg),
-          Text(
-            page.description,
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: isDark ? KoogweColors.darkTextSecondary : KoogweColors.lightTextSecondary,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isSmallScreen = constraints.maxHeight < 700;
+              final iconSize = isSmallScreen ? 60.0 : 100.0;
+              final iconIconSize = isSmallScreen ? 30.0 : 50.0;
+              
+              return Column(
+                children: [
+                  Container(
+                    width: iconSize,
+                    height: iconSize,
+                    decoration: BoxDecoration(
+                      color: page.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        page.icon,
+                        size: iconIconSize,
+                        color: page.color,
+                      ),
+                    ),
+                  ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                  SizedBox(height: isSmallScreen ? KoogweSpacing.md : KoogweSpacing.lg),
+                  Text(
+                    page.title,
+                    style: GoogleFonts.inter(
+                      fontSize: isSmallScreen ? 16 : 20,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
+                  SizedBox(height: isSmallScreen ? KoogweSpacing.xs : KoogweSpacing.sm),
+                  Text(
+                    page.description,
+                    style: GoogleFonts.inter(
+                      fontSize: isSmallScreen ? 11 : 13,
+                      fontWeight: FontWeight.w400,
+                      color: isDark ? KoogweColors.darkTextSecondary : KoogweColors.lightTextSecondary,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );

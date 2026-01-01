@@ -302,20 +302,61 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(KoogweSpacing.md),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.2),
-                              border: Border.all(color: Colors.amber),
+                              color: authState.error!.contains('confirmation') 
+                                  ? Colors.blue.withValues(alpha: 0.2)
+                                  : Colors.amber.withValues(alpha: 0.2),
+                              border: Border.all(
+                                color: authState.error!.contains('confirmation')
+                                    ? Colors.blue
+                                    : Colors.amber,
+                              ),
                               borderRadius: KoogweRadius.mdRadius,
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.info_outline, color: Colors.amber),
-                                const SizedBox(width: KoogweSpacing.sm),
-                                Expanded(
-                                  child: Text(
-                                    authState.error!,
-                                    style: GoogleFonts.inter(),
-                                  ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      authState.error!.contains('confirmation')
+                                          ? Icons.email_outlined
+                                          : Icons.info_outline,
+                                      color: authState.error!.contains('confirmation')
+                                          ? Colors.blue
+                                          : Colors.amber,
+                                    ),
+                                    const SizedBox(width: KoogweSpacing.sm),
+                                    Expanded(
+                                      child: Text(
+                                        authState.error!,
+                                        style: GoogleFonts.inter(),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                if (authState.error!.contains('confirmation')) ...[
+                                  const SizedBox(height: KoogweSpacing.md),
+                                  KoogweButton(
+                                    text: 'Renvoyer l\'email de confirmation',
+                                    onPressed: () async {
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      await ref.read(authProvider.notifier).resendConfirmationEmail(
+                                        _emailController.text.trim(),
+                                      );
+                                      if (mounted) {
+                                        messenger.showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Email de confirmation renvoyé !'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    isFullWidth: true,
+                                    variant: ButtonVariant.outline,
+                                    size: ButtonSize.small,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

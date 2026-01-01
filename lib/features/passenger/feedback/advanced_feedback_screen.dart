@@ -6,17 +6,22 @@ import 'package:koogwe/core/constants/app_spacing.dart';
 import 'package:koogwe/core/widgets/koogwe_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdvancedFeedbackScreen extends StatefulWidget {
   final String rideId;
   final String driverName;
   final double ridePrice;
+  final double? distance; // en km
+  final int? duration; // en minutes
 
   const AdvancedFeedbackScreen({
     super.key,
     required this.rideId,
     required this.driverName,
     required this.ridePrice,
+    this.distance,
+    this.duration,
   });
 
   @override
@@ -67,7 +72,23 @@ class _AdvancedFeedbackScreenState extends State<AdvancedFeedbackScreen> {
       }
     }
 
-    // TODO: Envoyer le feedback
+    // Envoyer le feedback à Supabase
+    try {
+      await Supabase.instance.client.from('ratings').insert({
+        'ride_id': widget.rideId,
+        'rating': _overallRating,
+        'cleanliness': _cleanlinessRating,
+        'safety': _safetyRating,
+        'punctuality': _punctualityRating,
+        'courtesy': _courtesyRating,
+        'comment': _commentController.text.isNotEmpty ? _commentController.text : null,
+        'quick_feedback': _quickFeedback,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Erreur envoi feedback: $e');
+    }
+    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Merci pour votre évaluation !')),
@@ -127,6 +148,54 @@ class _AdvancedFeedbackScreenState extends State<AdvancedFeedbackScreen> {
                 ],
               ),
             ).animate().fadeIn().scale(),
+
+            const SizedBox(height: KoogweSpacing.xl),
+
+            // Détails du trajet (Total Fare, Distance, Duration)
+            Container(
+              padding: const EdgeInsets.all(KoogweSpacing.lg),
+              decoration: BoxDecoration(
+                color: KoogweColors.primary.withValues(alpha: 0.05),
+                borderRadius: KoogweRadius.lgRadius,
+                border: Border.all(
+                  color: KoogweColors.primary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                children: [
+                  _RideDetailRow(
+                    label: 'Total Fare',
+                    value: '€${widget.ridePrice.toStringAsFixed(2)}',
+                    isDark: isDark,
+                    isPrice: true,
+                  ),
+                  const SizedBox(height: KoogweSpacing.md),
+                  Divider(
+                    color: isDark ? KoogweColors.darkBorder : KoogweColors.lightBorder,
+                  ),
+                  const SizedBox(height: KoogweSpacing.md),
+                  _RideDetailRow(
+                    label: 'Distance',
+                    value: widget.distance != null 
+                        ? '${widget.distance!.toStringAsFixed(1)} km'
+                        : 'N/A',
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: KoogweSpacing.md),
+                  Divider(
+                    color: isDark ? KoogweColors.darkBorder : KoogweColors.lightBorder,
+                  ),
+                  const SizedBox(height: KoogweSpacing.md),
+                  _RideDetailRow(
+                    label: 'Duration',
+                    value: widget.duration != null 
+                        ? '${widget.duration} min'
+                        : 'N/A',
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
 
             const SizedBox(height: KoogweSpacing.xxxl),
 
@@ -351,6 +420,45 @@ class _RatingSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RideDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDark;
+  final bool isPrice;
+
+  const _RideDetailRow({
+    required this.label,
+    required this.value,
+    required this.isDark,
+    this.isPrice = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary,
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: isPrice ? KoogweColors.primary : (isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary),
+          ),
+        ),
+      ],
     );
   }
 }

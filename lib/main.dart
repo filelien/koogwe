@@ -13,7 +13,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Ensure Supabase is ready for auth and deep-link handling
-  await SupabaseService.init();
+  try {
+    await SupabaseService.init();
+  } catch (e) {
+    debugPrint('[Main] ⚠️ Supabase initialization failed: $e');
+    debugPrint('[Main] L\'application va démarrer mais certaines fonctionnalités peuvent ne pas fonctionner.');
+    debugPrint('[Main] Vérifiez votre configuration Supabase dans lib/core/config/env.dart');
+    // Continuer le démarrage même si Supabase échoue
+  }
   
   // Initialize localization
   await EasyLocalization.ensureInitialized();
@@ -80,6 +87,33 @@ class KoogweApp extends ConsumerWidget {
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
       routerConfig: appRouter,
+      // Éviter l'écran noir au démarrage - afficher immédiatement le contenu
+      builder: (context, child) {
+        // Toujours afficher le child, même s'il est null temporairement
+        final childWidget = child ?? Container(
+          color: themeState.mode == KoogweThemeMode.dark 
+              ? const Color(0xFF121212) 
+              : const Color(0xFFF5F5F5),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+        
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: MediaQuery.of(context).textScaler.clamp(
+              minScaleFactor: 0.8,
+              maxScaleFactor: 1.2,
+            ),
+          ),
+          child: Container(
+            color: themeState.mode == KoogweThemeMode.dark 
+                ? const Color(0xFF121212) 
+                : const Color(0xFFF5F5F5),
+            child: childWidget,
+          ),
+        );
+      },
     );
   }
 }

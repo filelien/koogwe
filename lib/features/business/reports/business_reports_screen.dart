@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:koogwe/core/constants/app_colors.dart';
 import 'package:koogwe/core/constants/app_spacing.dart';
+import 'package:koogwe/core/services/export_service.dart';
+import 'package:koogwe/core/services/report_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 class BusinessReportsScreen extends StatefulWidget {
   const BusinessReportsScreen({super.key});
@@ -26,9 +29,37 @@ class _BusinessReportsScreenState extends State<BusinessReportsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.download),
-            onPressed: () {
-              // TODO: Exporter le rapport
+            onPressed: () async {
+              final reportService = ReportService();
+              DateTime startDate;
+              DateTime endDate = DateTime.now();
+              
+              switch (_selectedPeriod) {
+                case 'Jour':
+                  startDate = DateTime.now().subtract(const Duration(days: 1));
+                  break;
+                case 'Semaine':
+                  startDate = DateTime.now().subtract(const Duration(days: 7));
+                  break;
+                case 'Mois':
+                  startDate = DateTime.now().subtract(const Duration(days: 30));
+                  break;
+                default:
+                  startDate = DateTime.now().subtract(const Duration(days: 30));
+              }
+              
+              final pdf = await reportService.generateBusinessReport(
+                startDate: startDate,
+                endDate: endDate,
+              );
+              
+              if (pdf != null && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Rapport PDF généré avec succès')),
+                );
+              }
             },
+            tooltip: 'Exporter en PDF',
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'package:koogwe/core/constants/app_colors.dart';
 import 'package:koogwe/core/constants/app_spacing.dart';
 import 'package:koogwe/core/providers/vehicle_catalog_provider.dart';
 import 'package:koogwe/core/widgets/koogwe_button.dart';
+import 'package:koogwe/core/router/app_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class VehicleCatalogScreen extends ConsumerWidget {
@@ -72,7 +73,7 @@ class VehicleCatalogScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.push('/driver/vehicles/add'),
+            onPressed: () => context.push(AppRoutes.addVehicle),
           ),
         ],
       ),
@@ -101,7 +102,7 @@ class VehicleCatalogScreen extends ConsumerWidget {
                       KoogweButton(
                         text: 'Ajouter un véhicule',
                         icon: Icons.add,
-                        onPressed: () => context.push('/driver/vehicles/add'),
+                        onPressed: () => context.push(AppRoutes.addVehicle),
                       ),
                     ],
                   ),

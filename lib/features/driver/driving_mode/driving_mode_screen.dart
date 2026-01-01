@@ -4,15 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:koogwe/core/constants/app_colors.dart';
 import 'package:koogwe/core/constants/app_spacing.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:koogwe/core/providers/ride_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class DrivingModeScreen extends StatefulWidget {
+class DrivingModeScreen extends ConsumerStatefulWidget {
   const DrivingModeScreen({super.key});
 
   @override
-  State<DrivingModeScreen> createState() => _DrivingModeScreenState();
+  ConsumerState<DrivingModeScreen> createState() => _DrivingModeScreenState();
 }
 
-class _DrivingModeScreenState extends State<DrivingModeScreen> {
+class _DrivingModeScreenState extends ConsumerState<DrivingModeScreen> {
   bool _isOnline = false;
   String _currentStatus = 'Hors ligne';
 
@@ -165,39 +169,97 @@ class _DrivingModeScreenState extends State<DrivingModeScreen> {
                     icon: Icons.navigation,
                     label: 'Navigation',
                     onTap: () async {
-                      // Simuler l'ouverture de l'application de navigation
-                      // TODO: Intégrer avec Google Maps / Waze via url_launcher
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Navigation - Bientôt disponible')),
+                      final rideState = ref.read(rideProvider);
+                      final pickup = rideState.current?.pickupAddress ?? rideState.current?.pickup ?? '';
+                      final dropoff = rideState.current?.dropoffAddress ?? rideState.current?.dropoff ?? '';
+                      
+                      // Ouvrir Google Maps avec l'itinéraire
+                      final uri = Uri.parse(
+                        'https://www.google.com/maps/dir/${Uri.encodeComponent(pickup)}/${Uri.encodeComponent(dropoff)}',
                       );
+                      final messenger = ScaffoldMessenger.of(context);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } else {
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Impossible d\'ouvrir la navigation')),
+                        );
+                      }
                     },
                   ),
                   _QuickActionButton(
                     icon: Icons.phone,
                     label: 'Appel',
                     onTap: () async {
-                      // Simuler un appel
-                      // TODO: Obtenir le numéro du passager depuis le provider de course
-                      final phoneNumber = '+594694123456'; // Numéro de test
-                      // TODO: Utiliser url_launcher pour l'appel réel
-                      // final uri = Uri(scheme: 'tel', path: phoneNumber);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Appel vers $phoneNumber')),
-                      );
+                      final messenger = ScaffoldMessenger.of(context);
+                      final rideState = ref.read(rideProvider);
+                      String? phoneNumber = rideState.current?.passengerPhone;
+                      
+                      // Si pas de numéro dans le ride, essayer de le récupérer depuis le profil
+                      if (phoneNumber == null || phoneNumber.isEmpty) {
+                        try {
+                          final passengerId = rideState.current?.passengerId;
+                          if (passengerId != null && passengerId.isNotEmpty) {
+                            final profile = await Supabase.instance.client
+                                .from('profiles')
+                                .select('phone_number')
+                                .eq('id', passengerId)
+                                .maybeSingle();
+                            phoneNumber = profile?['phone_number']?.toString();
+                          }
+                        } catch (e) {
+                          debugPrint('Erreur récupération téléphone: $e');
+                        }
+                      }
+                      
+                      phoneNumber ??= '+594694123456'; // Fallback
+                      final uri = Uri(scheme: 'tel', path: phoneNumber);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('Impossible d\'appeler $phoneNumber')),
+                        );
+                      }
                     },
                   ),
                   _QuickActionButton(
                     icon: Icons.message,
                     label: 'Message',
                     onTap: () async {
-                      // Simuler l'envoi d'un message
-                      // TODO: Obtenir le numéro du passager depuis le provider de course
-                      final phoneNumber = '+594694123456'; // Numéro de test
-                      // TODO: Utiliser url_launcher pour l'envoi réel
-                      // final uri = Uri(scheme: 'sms', path: phoneNumber);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Message vers $phoneNumber')),
-                      );
+                      final messenger = ScaffoldMessenger.of(context);
+                      final rideState = ref.read(rideProvider);
+                      String? phoneNumber = rideState.current?.passengerPhone;
+                      
+                      // Si pas de numéro dans le ride, essayer de le récupérer depuis le profil
+                      if (phoneNumber == null || phoneNumber.isEmpty) {
+                        try {
+                          final passengerId = rideState.current?.passengerId;
+                          if (passengerId != null && passengerId.isNotEmpty) {
+                            final profile = await Supabase.instance.client
+                                .from('profiles')
+                                .select('phone_number')
+                                .eq('id', passengerId)
+                                .maybeSingle();
+                            phoneNumber = profile?['phone_number']?.toString();
+                          }
+                        } catch (e) {
+                          debugPrint('Erreur récupération téléphone: $e');
+                        }
+                      }
+                      
+                      phoneNumber ??= '+594694123456'; // Fallback
+                      final uri = Uri(scheme: 'sms', path: phoneNumber);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('Impossible d\'envoyer un SMS à $phoneNumber')),
+                        );
+                      }
                     },
                   ),
                 ],

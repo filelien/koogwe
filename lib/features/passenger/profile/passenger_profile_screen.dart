@@ -5,6 +5,7 @@ import 'package:koogwe/core/constants/app_colors.dart';
 import 'package:koogwe/core/constants/app_spacing.dart';
 import 'package:koogwe/core/providers/auth_provider.dart';
 import 'package:koogwe/core/widgets/koogwe_button.dart';
+import 'package:koogwe/core/router/app_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:koogwe/core/constants/app_assets.dart';
 
@@ -27,73 +28,73 @@ class PassengerProfileScreen extends ConsumerWidget {
                 leading: Icon(Icons.schedule, color: KoogweColors.primary),
                 title: const Text('Trajets planifiés'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/scheduled'),
+                onTap: () => context.push(AppRoutes.scheduledRide),
               ),
               ListTile(
                 leading: Icon(Icons.handshake, color: KoogweColors.secondary),
                 title: const Text('Prix transparent'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/negotiation'),
+                onTap: () => context.push(AppRoutes.priceNegotiation),
               ),
               ListTile(
                 leading: Icon(Icons.air, color: KoogweColors.accent),
                 title: const Text('Préférences confort'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/comfort'),
+                onTap: () => context.push(AppRoutes.comfortPreferences),
               ),
               ListTile(
                 leading: Icon(Icons.share_location, color: KoogweColors.success),
                 title: const Text('Partage de position'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/share'),
+                onTap: () => context.push(AppRoutes.shareLocation),
               ),
               ListTile(
                 leading: Icon(Icons.star, color: KoogweColors.accent),
                 title: const Text('Score & Réputation'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/reputation'),
+                onTap: () => context.push(AppRoutes.reputation),
               ),
               ListTile(
                 leading: Icon(Icons.support_agent, color: KoogweColors.error),
                 title: const Text('Litiges & Support'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/disputes'),
+                onTap: () => context.push(AppRoutes.disputes),
               ),
               ListTile(
                 leading: Icon(Icons.card_membership, color: KoogweColors.primary),
                 title: const Text('Abonnements & Pass'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/subscription'),
+                onTap: () => context.push(AppRoutes.subscription),
               ),
               ListTile(
                 leading: Icon(Icons.trending_up, color: KoogweColors.accent),
                 title: const Text('Prix prédictif'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/predictive-pricing'),
+                onTap: () => context.push(AppRoutes.predictivePricing),
               ),
               ListTile(
                 leading: Icon(Icons.family_restroom, color: KoogweColors.primary),
                 title: const Text('Mode Famille'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/family'),
+                onTap: () => context.push(AppRoutes.familyMode),
               ),
               ListTile(
                 leading: Icon(Icons.verified_user, color: KoogweColors.success),
                 title: const Text('Vérification d\'identité'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/identity-verification'),
+                onTap: () => context.push(AppRoutes.identityVerification),
               ),
               ListTile(
                 leading: Icon(Icons.analytics, color: KoogweColors.secondary),
                 title: const Text('Analyse de mobilité'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/mobility-analytics'),
+                onTap: () => context.push(AppRoutes.mobilityAnalytics),
               ),
               ListTile(
                 leading: Icon(Icons.eco, color: KoogweColors.success),
                 title: const Text('Mode Éco-Trajet'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.push('/passenger/eco-trip'),
+                onTap: () => context.push(AppRoutes.ecoTrip),
               ),
             ],
           ),
@@ -110,12 +111,71 @@ class PassengerProfileScreen extends ConsumerWidget {
                   leading: const Icon(Icons.notifications),
                   title: const Text('Notifications'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => context.push('/passenger/notifications'),
+                  onTap: () => context.push(AppRoutes.notifications),
                 ),
                 const Divider(height: 0),
-                const ListTile(leading: Icon(Icons.history), title: Text('Historique des trajets')),
+                ListTile(
+                  leading: const Icon(Icons.history),
+                  title: const Text('Historique des trajets'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.rideHistory),
+                ),
                 const Divider(height: 0),
-                const ListTile(leading: Icon(Icons.favorite_border), title: Text('Favoris')),
+                ListTile(
+                  leading: const Icon(Icons.favorite_border),
+                  title: const Text('Destinations favorites'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.favoritesDestinations),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.local_offer),
+                  title: const Text('Promotions & Codes'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.promotions),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.help_outline),
+                  title: const Text('FAQ & Aide'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.faq),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.add_location),
+                  title: const Text('Trajet avec arrêts multiples'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.multiStop),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.compare_arrows),
+                  title: const Text('Comparaison de prix'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push('${AppRoutes.priceComparison}?pickup=&dropoff='),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.history),
+                  title: const Text('Historique de recherche'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.searchHistory),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.lightbulb_outline),
+                  title: const Text('Suggestions intelligentes'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.smartSuggestions),
+                ),
+                const Divider(height: 0),
+                ListTile(
+                  leading: const Icon(Icons.support_agent),
+                  title: const Text('Centre d\'aide'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(AppRoutes.helpCenter),
+                ),
               ],
             ),
           ),
@@ -160,15 +220,6 @@ class PassengerProfileScreen extends ConsumerWidget {
               borderRadius: KoogweRadius.lgRadius,
               border: Border.all(color: isDark ? KoogweColors.darkBorder : KoogweColors.lightBorder),
             ),
-            child: Column(
-              children: const [
-                ListTile(leading: Icon(Icons.history), title: Text('Historique des trajets')),
-                Divider(height: 0),
-                ListTile(leading: Icon(Icons.favorite_border), title: Text('Favoris')),
-                Divider(height: 0),
-                ListTile(leading: Icon(Icons.notifications_none), title: Text('Notifications')),
-              ],
-            ),
           ),
           const SizedBox(height: KoogweSpacing.xxxl),
           KoogweButton(
@@ -178,7 +229,7 @@ class PassengerProfileScreen extends ConsumerWidget {
             isFullWidth: true,
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
-              if (context.mounted) context.go('/home-hero');
+              if (context.mounted) context.go(AppRoutes.homeHero);
             },
           ),
         ],

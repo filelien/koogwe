@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:koogwe/core/constants/app_colors.dart';
 import 'package:koogwe/core/constants/app_spacing.dart';
 import 'package:koogwe/core/providers/service_type_provider.dart';
+import 'package:koogwe/core/router/app_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ServiceSelectionScreen extends ConsumerWidget {
@@ -52,6 +53,10 @@ class ServiceSelectionScreen extends ConsumerWidget {
               onTap: () {
                 ref.read(serviceTypeProvider.notifier).setServiceType(ServiceType.passengerTransport);
                 context.pop();
+                // Rediriger vers la réservation de course
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  context.push(AppRoutes.rideBooking);
+                });
               },
             ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
             
@@ -66,6 +71,10 @@ class ServiceSelectionScreen extends ConsumerWidget {
               onTap: () {
                 ref.read(serviceTypeProvider.notifier).setServiceType(ServiceType.packageDelivery);
                 context.pop();
+                // Rediriger vers la réservation avec type de service livraison
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  context.push(AppRoutes.rideBooking);
+                });
               },
             ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
             
@@ -80,6 +89,10 @@ class ServiceSelectionScreen extends ConsumerWidget {
               onTap: () {
                 ref.read(serviceTypeProvider.notifier).setServiceType(ServiceType.quickDelivery);
                 context.pop();
+                // Rediriger vers la réservation avec type de service express
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  context.push(AppRoutes.rideBooking);
+                });
               },
             ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
             
@@ -94,6 +107,10 @@ class ServiceSelectionScreen extends ConsumerWidget {
               onTap: () {
                 ref.read(serviceTypeProvider.notifier).setServiceType(ServiceType.businessTransport);
                 context.pop();
+                // Rediriger vers la réservation avec type de service entreprise
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  context.push(AppRoutes.rideBooking);
+                });
               },
             ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1, end: 0),
           ],

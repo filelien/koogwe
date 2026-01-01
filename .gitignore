@@ -90,3 +90,11 @@ lib/generated_plugin_registrant.dart
 !ios/Runner/Assets.xcassets/**/*.png
 !android/app/src/main/res/**/*.png
 
+# Backup and build folders
+bck/
+build/
+*.apk
+*.aab
+*.dill
+*.dill.track.dill
+

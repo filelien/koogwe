@@ -18,7 +18,7 @@ import 'package:koogwe/features/passenger/ride/ride_tracking_screen.dart';
 import 'package:koogwe/features/passenger/profile/passenger_profile_screen.dart';
 import 'package:koogwe/features/passenger/wallet/wallet_screen.dart';
 import 'package:koogwe/features/passenger/history/ride_history_screen.dart';
-import 'package:koogwe/features/passenger/scheduled/scheduled_ride_screen.dart';
+import 'package:koogwe/features/passenger/scheduled/scheduled_ride_screen_improved.dart';
 import 'package:koogwe/features/passenger/negotiation/price_negotiation_screen.dart';
 import 'package:koogwe/features/passenger/comfort/comfort_preferences_screen.dart';
 import 'package:koogwe/features/passenger/share/share_location_screen.dart';
@@ -35,10 +35,23 @@ import 'package:koogwe/features/passenger/identity_verification/identity_verific
 import 'package:koogwe/features/passenger/mobility_analytics/mobility_analytics_screen.dart';
 import 'package:koogwe/features/passenger/eco_trip/eco_trip_screen.dart';
 import 'package:koogwe/features/driver/vehicles/vehicle_catalog_screen.dart';
+import 'package:koogwe/features/driver/vehicles/add_vehicle_screen.dart';
 import 'package:koogwe/features/passenger/ride/ride_preview_screen.dart';
 import 'package:koogwe/features/passenger/advanced_sos/advanced_sos_screen.dart';
 import 'package:koogwe/features/passenger/notifications/notifications_screen.dart';
 import 'package:koogwe/features/passenger/feedback/advanced_feedback_screen.dart';
+import 'package:koogwe/features/passenger/chat/driver_chat_screen.dart';
+import 'package:koogwe/features/passenger/invoice/invoice_detail_screen.dart';
+import 'package:koogwe/features/passenger/favorites/favorites_destinations_screen.dart';
+import 'package:koogwe/features/passenger/promotions/promotions_screen.dart';
+import 'package:koogwe/features/passenger/help/faq_screen.dart';
+import 'package:koogwe/features/passenger/share/share_eta_screen.dart';
+import 'package:koogwe/features/passenger/multi_stop/multi_stop_ride_screen.dart';
+import 'package:koogwe/features/passenger/price_comparison/price_comparison_screen.dart';
+import 'package:koogwe/features/passenger/search_history/search_history_screen.dart';
+import 'package:koogwe/features/passenger/suggestions/smart_suggestions_screen.dart';
+import 'package:koogwe/features/passenger/carpool/carpool_screen.dart';
+import 'package:koogwe/features/passenger/help/help_center_screen.dart';
 import 'package:koogwe/features/driver/performance/driver_performance_screen.dart';
 import 'package:koogwe/features/business/reports/business_reports_screen.dart';
 import 'package:koogwe/features/driver/home/driver_home_screen.dart';
@@ -46,7 +59,22 @@ import 'package:koogwe/features/driver/earnings/earnings_screen.dart';
 import 'package:koogwe/features/driver/profile/driver_profile_screen.dart';
 import 'package:koogwe/features/settings/settings_screen.dart';
 import 'package:koogwe/features/settings/theme_settings_screen.dart';
+import 'package:koogwe/features/settings/security_settings_screen.dart';
+import 'package:koogwe/features/settings/privacy_settings_screen.dart';
+import 'package:koogwe/features/driver/onboarding/driver_onboarding_screen.dart';
+import 'package:koogwe/features/driver/rides/driver_rides_screen.dart';
+import 'package:koogwe/features/driver/statistics/driver_statistics_screen.dart';
+import 'package:koogwe/features/business/onboarding/business_onboarding_screen.dart';
+import 'package:koogwe/features/business/employees/business_employees_screen.dart';
+import 'package:koogwe/features/business/bookings/business_bookings_screen.dart';
+import 'package:koogwe/features/business/budget/business_budget_screen.dart';
+import 'package:koogwe/features/business/invoices/business_invoices_screen.dart';
 import 'package:koogwe/features/admin/admin_dashboard_screen.dart';
+import 'package:koogwe/features/admin/users/admin_users_screen.dart';
+import 'package:koogwe/features/admin/rides/admin_rides_screen.dart';
+import 'package:koogwe/features/admin/payments/admin_payments_screen.dart';
+import 'package:koogwe/features/admin/security/admin_security_screen.dart';
+import 'package:koogwe/features/admin/pricing/admin_pricing_screen.dart';
 import 'package:koogwe/features/business/business_dashboard_screen.dart';
 import 'package:koogwe/features/support/chatbot_screen.dart';
 import 'package:koogwe/features/misc/maintenance_screen.dart';
@@ -54,6 +82,7 @@ import 'package:koogwe/features/misc/network_error_screen.dart';
 import 'package:koogwe/features/misc/terms_screen.dart';
 import 'package:koogwe/features/misc/supabase_test_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:koogwe/core/providers/auth_provider.dart';
 import 'dart:async';
 
 class AppRoutes {
@@ -88,6 +117,7 @@ class AppRoutes {
   static const subscription = '/passenger/subscription';
   static const driverDocuments = '/driver/documents';
   static const vehicleCatalog = '/driver/vehicles';
+  static const addVehicle = '/driver/vehicles/add';
   static const predictivePricing = '/passenger/predictive-pricing';
   static const familyMode = '/passenger/family';
   static const identityVerification = '/passenger/identity-verification';
@@ -97,6 +127,18 @@ class AppRoutes {
   static const advancedSOS = '/passenger/advanced-sos';
   static const notifications = '/passenger/notifications';
   static const advancedFeedback = '/passenger/feedback';
+  static const driverChat = '/passenger/chat';
+  static const invoiceDetail = '/passenger/invoice';
+  static const favoritesDestinations = '/passenger/favorites';
+  static const promotions = '/passenger/promotions';
+  static const faq = '/passenger/faq';
+  static const shareETA = '/passenger/share-eta';
+  static const multiStop = '/passenger/multi-stop';
+  static const priceComparison = '/passenger/price-comparison';
+  static const searchHistory = '/passenger/search-history';
+  static const smartSuggestions = '/passenger/suggestions';
+  static const helpCenter = '/passenger/help-center';
+  static const carpool = '/passenger/carpool';
   static const driverPerformance = '/driver/performance';
   static const businessReports = '/business/reports';
   
@@ -106,7 +148,22 @@ class AppRoutes {
   
   static const settings = '/settings';
   static const themeSettings = '/settings/themes';
+  static const securitySettings = '/settings/security';
+  static const privacySettings = '/settings/privacy';
+  static const driverOnboarding = '/driver/onboarding';
+  static const driverRides = '/driver/rides';
+  static const driverStatistics = '/driver/statistics';
+  static const businessOnboarding = '/business/onboarding';
+  static const businessEmployees = '/business/employees';
+  static const businessBookings = '/business/bookings';
+  static const businessBudget = '/business/budget';
+  static const businessInvoices = '/business/invoices';
   static const adminDashboard = '/admin/dashboard';
+  static const adminUsers = '/admin/users';
+  static const adminRides = '/admin/rides';
+  static const adminPayments = '/admin/payments';
+  static const adminSecurity = '/admin/security';
+  static const adminPricing = '/admin/pricing';
   static const businessDashboard = '/business/dashboard';
   static const supportChatbot = '/support/chatbot';
   static const maintenance = '/maintenance';
@@ -123,6 +180,41 @@ bool _isProtected(String location) {
       location.startsWith('/settings');
 }
 
+/// Get the home route based on user role
+String? _getHomeRouteForRole(UserRole? role) {
+  switch (role) {
+    case UserRole.admin:
+      return AppRoutes.adminDashboard;
+    case UserRole.driver:
+      return AppRoutes.driverHome;
+    case UserRole.business:
+      return AppRoutes.businessDashboard;
+    case UserRole.passenger:
+    default:
+      return AppRoutes.passengerHome;
+  }
+}
+
+/// Check if user has access to a route based on their role
+bool _hasAccessToRoute(String route, UserRole? role) {
+  if (route.startsWith('/admin')) {
+    return role == UserRole.admin;
+  }
+  if (route.startsWith('/driver')) {
+    return role == UserRole.driver || role == UserRole.admin;
+  }
+  if (route.startsWith('/business')) {
+    return role == UserRole.business || role == UserRole.admin;
+  }
+  if (route.startsWith('/passenger')) {
+    return role == UserRole.passenger || role == UserRole.admin;
+  }
+  if (route.startsWith('/settings')) {
+    return true; // Settings accessible to all authenticated users
+  }
+  return true; // Other routes accessible
+}
+
 final appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
   // Ensure router reevaluates redirects when auth state changes (login/logout)
@@ -132,6 +224,7 @@ final appRouter = GoRouter(
   redirect: (context, state) {
     final user = Supabase.instance.client.auth.currentUser;
     final goingTo = state.uri.toString();
+    
     // Allow public routes
     final publiclyAccessible = {
       AppRoutes.splash,
@@ -150,13 +243,60 @@ final appRouter = GoRouter(
       AppRoutes.terms,
       AppRoutes.supabaseTest, // Allow test screen for debugging
     };
+    
     if (publiclyAccessible.contains(goingTo)) return null;
+    
+    // If route is protected and user is not logged in, redirect to login
     if (_isProtected(goingTo) && user == null) {
       return AppRoutes.login;
     }
+    
+    // If user is logged in and trying to access login/register, redirect to their home
     if ((goingTo == AppRoutes.login || goingTo == AppRoutes.register) && user != null) {
-      return AppRoutes.passengerHome;
+      final meta = user.userMetadata ?? {};
+      final roleStr = (meta['role'] ?? 'passenger').toString();
+      UserRole role;
+      switch (roleStr) {
+        case 'driver':
+          role = UserRole.driver;
+          break;
+        case 'admin':
+          role = UserRole.admin;
+          break;
+        case 'business':
+          role = UserRole.business;
+          break;
+        default:
+          role = UserRole.passenger;
+      }
+      return _getHomeRouteForRole(role);
     }
+    
+    // Check if user has access to the route based on their role
+    if (user != null && _isProtected(goingTo)) {
+      final meta = user.userMetadata ?? {};
+      final roleStr = (meta['role'] ?? 'passenger').toString();
+      UserRole role;
+      switch (roleStr) {
+        case 'driver':
+          role = UserRole.driver;
+          break;
+        case 'admin':
+          role = UserRole.admin;
+          break;
+        case 'business':
+          role = UserRole.business;
+          break;
+        default:
+          role = UserRole.passenger;
+      }
+      
+      if (!_hasAccessToRoute(goingTo, role)) {
+        // User doesn't have access, redirect to their home
+        return _getHomeRouteForRole(role);
+      }
+    }
+    
     return null;
   },
   routes: [
@@ -234,7 +374,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.scheduledRide,
-      builder: (context, state) => const ScheduledRideScreen(),
+      builder: (context, state) => const ScheduledRideScreenImproved(),
     ),
     GoRoute(
       path: AppRoutes.priceNegotiation,
@@ -301,6 +441,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const VehicleCatalogScreen(),
     ),
     GoRoute(
+      path: AppRoutes.addVehicle,
+      builder: (context, state) => const AddVehicleScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.ridePreview,
       builder: (context, state) {
         final vehicleType = state.uri.queryParameters['vehicleType'] ?? 'Confort';
@@ -308,12 +452,22 @@ final appRouter = GoRouter(
         final dropoff = state.uri.queryParameters['dropoff'] ?? '';
         final price = double.tryParse(state.uri.queryParameters['price'] ?? '0') ?? 0.0;
         final duration = int.tryParse(state.uri.queryParameters['duration'] ?? '20') ?? 20;
+        final driverName = state.uri.queryParameters['driverName'];
+        final driverRating = double.tryParse(state.uri.queryParameters['driverRating'] ?? '');
+        final driverStoreAddress = state.uri.queryParameters['driverStoreAddress'];
+        final carModel = state.uri.queryParameters['carModel'];
+        final carNumber = state.uri.queryParameters['carNumber'];
         return RidePreviewScreen(
           vehicleType: vehicleType,
           pickup: pickup,
           dropoff: dropoff,
           estimatedPrice: price,
           estimatedDuration: duration,
+          driverName: driverName,
+          driverRating: driverRating,
+          driverStoreAddress: driverStoreAddress ?? 'Midnight transportation store',
+          carModel: carModel ?? 'Toyota Camry',
+          carNumber: carNumber ?? '23-10-00',
         );
       },
     ),
@@ -337,6 +491,90 @@ final appRouter = GoRouter(
           ridePrice: price,
         );
       },
+    ),
+    GoRoute(
+      path: AppRoutes.driverChat,
+      builder: (context, state) {
+        final rideId = state.uri.queryParameters['rideId'];
+        final driverId = state.uri.queryParameters['driverId'];
+        final driverName = state.uri.queryParameters['driverName'];
+        final driverAvatar = state.uri.queryParameters['driverAvatar'];
+        return DriverChatScreen(
+          rideId: rideId,
+          driverId: driverId,
+          driverName: driverName,
+          driverAvatar: driverAvatar,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.invoiceDetail,
+      builder: (context, state) {
+        final rideId = state.uri.queryParameters['rideId'];
+        final invoiceId = state.uri.queryParameters['invoiceId'];
+        return InvoiceDetailScreen(
+          rideId: rideId,
+          invoiceId: invoiceId,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.favoritesDestinations,
+      builder: (context, state) => const FavoritesDestinationsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.promotions,
+      builder: (context, state) => const PromotionsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.faq,
+      builder: (context, state) => const FAQScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.shareETA,
+      builder: (context, state) {
+        final rideId = state.uri.queryParameters['rideId'];
+        final pickup = state.uri.queryParameters['pickup'];
+        final dropoff = state.uri.queryParameters['dropoff'];
+        final eta = state.uri.queryParameters['eta'];
+        return ShareETAScreen(
+          rideId: rideId,
+          pickup: pickup,
+          dropoff: dropoff,
+          eta: eta,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.multiStop,
+      builder: (context, state) => const MultiStopRideScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.priceComparison,
+      builder: (context, state) {
+        final pickup = state.uri.queryParameters['pickup'] ?? '';
+        final dropoff = state.uri.queryParameters['dropoff'] ?? '';
+        return PriceComparisonScreen(
+          pickup: pickup,
+          dropoff: dropoff,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.searchHistory,
+      builder: (context, state) => const SearchHistoryScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.smartSuggestions,
+      builder: (context, state) => const SmartSuggestionsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.helpCenter,
+      builder: (context, state) => const HelpCenterScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.carpool,
+      builder: (context, state) => const CarpoolScreen(),
     ),
     GoRoute(
       path: AppRoutes.driverPerformance,
@@ -371,6 +609,26 @@ final appRouter = GoRouter(
       builder: (context, state) => const AdminDashboardScreen(),
     ),
     GoRoute(
+      path: AppRoutes.adminUsers,
+      builder: (context, state) => const AdminUsersScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminRides,
+      builder: (context, state) => const AdminRidesScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminPayments,
+      builder: (context, state) => const AdminPaymentsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminSecurity,
+      builder: (context, state) => const AdminSecurityScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.adminPricing,
+      builder: (context, state) => const AdminPricingScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.businessDashboard,
       builder: (context, state) => const BusinessDashboardScreen(),
     ),
@@ -393,6 +651,46 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.supabaseTest,
       builder: (context, state) => const SupabaseTestScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.securitySettings,
+      builder: (context, state) => const SecuritySettingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.privacySettings,
+      builder: (context, state) => const PrivacySettingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.driverOnboarding,
+      builder: (context, state) => const DriverOnboardingScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.driverRides,
+      builder: (context, state) => const DriverRidesScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.driverStatistics,
+      builder: (context, state) => const DriverStatisticsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.businessOnboarding,
+      builder: (context, state) => const BusinessOnboardingScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.businessEmployees,
+      builder: (context, state) => const BusinessEmployeesScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.businessBookings,
+      builder: (context, state) => const BusinessBookingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.businessBudget,
+      builder: (context, state) => const BusinessBudgetScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.businessInvoices,
+      builder: (context, state) => const BusinessInvoicesScreen(),
     ),
   ],
 );

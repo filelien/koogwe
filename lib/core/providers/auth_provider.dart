@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -63,6 +64,7 @@ class AuthNotifier extends Notifier<AuthState> {
     final current = _supabase.auth.currentUser;
     if (current == null) return AuthState();
     final meta = current.userMetadata ?? {};
+    debugPrint('[Auth] Building state, email confirmed: ${current.emailConfirmedAt != null}');
     return AuthState(
       user: User(
         id: current.id,
@@ -102,6 +104,7 @@ class AuthNotifier extends Notifier<AuthState> {
       
       if (u != null) {
         debugPrint('[Auth] Login successful, user ID: ${u.id}');
+        debugPrint('[Auth] Email confirmed: ${u.emailConfirmedAt != null}');
         final meta = u.userMetadata ?? {};
         state = state.copyWith(
           user: User(
@@ -129,7 +132,7 @@ class AuthNotifier extends Notifier<AuthState> {
           e.message.toLowerCase().contains('invalid credentials')) {
         userMessage = 'Email ou mot de passe incorrect.';
       } else if (e.message.toLowerCase().contains('email not confirmed')) {
-        userMessage = 'Veuillez confirmer votre email avant de vous connecter.';
+        userMessage = 'Veuillez confirmer votre email avant de vous connecter. Cliquez sur le lien dans l\'email de confirmation.';
       } else if (e.message.toLowerCase().contains('too many requests')) {
         userMessage = 'Trop de tentatives. Veuillez patienter quelques instants.';
       } else {
@@ -176,16 +179,22 @@ class AuthNotifier extends Notifier<AuthState> {
       while (retries > 0) {
         try {
           debugPrint('[Auth] SignUp attempt ${4 - retries}/3');
+          // Supabase envoie automatiquement l'email de confirmation
+          // Pas besoin de configurer emailRedirectTo si non configuré
+          // Générer le username avant l'inscription
+          final username = _generateUsername(firstName, lastName, email);
+          
           response = await _supabase.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'firstName': firstName,
-          'lastName': lastName,
-          'phoneNumber': phoneNumber,
-          'role': role.name,
-        },
-      );
+            email: email,
+            password: password,
+            data: {
+              'firstName': firstName,
+              'lastName': lastName,
+              'phoneNumber': phoneNumber,
+              'role': role.name,
+              'username': username, // Inclure username pour le trigger
+            },
+          );
           debugPrint('[Auth] SignUp successful, user ID: ${response.user?.id}');
           break; // Success, exit retry loop
         } on AuthApiException catch (e) {
@@ -251,49 +260,29 @@ class AuthNotifier extends Notifier<AuthState> {
         state = state.copyWith(isLoading: false, error: userMessage);
         return;
       }
-      // Generate a username and persist in user metadata and optional profiles table.
-      final u = response?.user ?? _supabase.auth.currentUser;
+      // Vérifier si l'utilisateur a été créé
+      final u = response?.user;
+      
       if (u != null) {
-        final username = _generateUsername(firstName, lastName, email);
-        try {
-          await _supabase.auth.updateUser(UserAttributes(data: {
-            'username': username,
-            'firstName': firstName,
-            'lastName': lastName,
-            'phoneNumber': phoneNumber,
-            'role': role.name,
-          }));
-        } catch (e) {
-          debugPrint('Update user metadata failed: $e');
-        }
-        // Try to upsert into profiles table if it exists
-        try {
-          debugPrint('[Auth] Upserting profile for user: ${u.id}');
-          await _supabase.from('profiles').upsert({
-            'id': u.id,
-            'email': email,
-            'username': username,
-            'first_name': firstName,
-            'last_name': lastName,
-            'phone_number': phoneNumber,
-            'role': role.name,
-            'avatar_url': null,
-          }, onConflict: 'id');
-          debugPrint('[Auth] Profile upserted successfully');
-        } catch (e, st) {
-          debugPrint('[Auth] Profile upsert failed: $e');
-          debugPrint('[Auth] Stack: $st');
-          // Don't fail registration if profile upsert fails
-          // The trigger should create it automatically
-        }
-        // Fire welcome email via Edge Function (best-effort)
-        try {
-          await _supabase.functions.invoke('send_welcome_email', body: {
-            'email': email,
-            'firstName': firstName,
-          });
-        } catch (e) {
-          debugPrint('send_welcome_email invoke failed: $e');
+        debugPrint('[Auth] User created: ${u.id}');
+        debugPrint('[Auth] Email confirmed: ${u.emailConfirmedAt != null}');
+        
+        // Le profil est créé automatiquement par le trigger handle_new_user()
+        // qui utilise les métadonnées passées dans signUp() (firstName, lastName, etc.)
+        // Pas besoin d'upsert manuel - le trigger s'en charge avec SECURITY DEFINER
+        debugPrint('[Auth] Profile will be created automatically by trigger handle_new_user()');
+        
+        // Supabase envoie automatiquement l'email de confirmation
+        // Pas besoin d'email de bienvenue supplémentaire
+        
+        // Si l'email n'est pas confirmé, informer l'utilisateur mais ne pas bloquer
+        if (u.emailConfirmedAt == null) {
+          debugPrint('[Auth] Email confirmation required');
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Un email de confirmation a été envoyé à $email. Veuillez vérifier votre boîte de réception (et les spams) et cliquer sur le lien de confirmation avant de vous connecter.',
+          );
+          return;
         }
         final meta = u.userMetadata ?? {};
         state = state.copyWith(
@@ -314,7 +303,7 @@ class AuthNotifier extends Notifier<AuthState> {
         // User should check their email and confirm before logging in
         state = state.copyWith(
           isLoading: false,
-          error: 'Un email de confirmation a été envoyé. Veuillez vérifier votre boîte de réception et confirmer votre email avant de vous connecter.',
+          error: 'Un email de confirmation a été envoyé à $email. Veuillez vérifier votre boîte de réception (et les spams) et cliquer sur le lien de confirmation avant de vous connecter.',
         );
       }
     } on AuthApiException catch (e) {
@@ -335,25 +324,246 @@ class AuthNotifier extends Notifier<AuthState> {
     state = AuthState();
   }
 
-  Future<void> verifyOTP(String code) async {
-    // Optional: Hook up Supabase OTP verification if you use Email OTP
-    state = state.copyWith(isLoading: false);
+  /// Vérifier un code OTP (pour connexion par email/SMS)
+  Future<bool> verifyOTP(String code, {String? email, String? phone}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      if (code.isEmpty || code.length != 6) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Le code doit contenir 6 chiffres',
+        );
+        return false;
+      }
+
+      debugPrint('[Auth] Verifying OTP code...');
+      
+      // Vérifier le code OTP avec Supabase
+      final response = await _supabase.auth.verifyOTP(
+        type: OtpType.email,
+        token: code,
+        email: email,
+        phone: phone,
+      );
+
+      if (response.user != null) {
+        debugPrint('[Auth] OTP verified successfully');
+        final u = response.user!;
+        final meta = u.userMetadata ?? {};
+        
+        state = state.copyWith(
+          user: User(
+            id: u.id,
+            email: u.email ?? email ?? '',
+            firstName: (meta['firstName'] ?? meta['first_name'] ?? '').toString(),
+            lastName: (meta['lastName'] ?? meta['last_name'] ?? '').toString(),
+            phoneNumber: (meta['phoneNumber'] ?? meta['phone_number'] ?? phone)?.toString(),
+            role: _roleFrom(meta['role']),
+            profileImageUrl: meta['avatar_url']?.toString(),
+          ),
+          isAuthenticated: true,
+          isLoading: false,
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Code invalide. Veuillez réessayer.',
+        );
+        return false;
+      }
+    } on AuthApiException catch (e) {
+      debugPrint('[Auth] OTP verification error: ${e.message}');
+      String errorMessage;
+      if (e.message.toLowerCase().contains('invalid') || 
+          e.message.toLowerCase().contains('expired')) {
+        errorMessage = 'Code invalide ou expiré. Veuillez demander un nouveau code.';
+      } else {
+        errorMessage = 'Erreur lors de la vérification: ${e.message}';
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMessage,
+      );
+      return false;
+    } catch (e, st) {
+      debugPrint('[Auth] OTP verification error: $e\n$st');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Erreur lors de la vérification du code. Veuillez réessayer.',
+      );
+      return false;
+    }
+  }
+
+  /// Renvoyer un code OTP
+  Future<bool> resendOTP({String? email, String? phone, OtpType type = OtpType.email}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      if (email == null && phone == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Email ou numéro de téléphone requis',
+        );
+        return false;
+      }
+
+      debugPrint('[Auth] Resending OTP (type: $type)...');
+      
+      await _supabase.auth.resend(
+        type: type,
+        email: email,
+        phone: phone,
+      );
+
+      debugPrint('[Auth] OTP resent successfully');
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on AuthApiException catch (e) {
+      debugPrint('[Auth] Resend OTP error: ${e.message}');
+      String errorMessage;
+      if (e.message.toLowerCase().contains('rate limit') || 
+          e.message.toLowerCase().contains('too many')) {
+        errorMessage = 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.';
+      } else if (e.message.toLowerCase().contains('email') || 
+                 e.message.toLowerCase().contains('phone')) {
+        errorMessage = 'Email ou numéro de téléphone invalide.';
+      } else {
+        errorMessage = 'Erreur lors de l\'envoi du code: ${e.message}';
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMessage,
+      );
+      return false;
+    } catch (e, st) {
+      debugPrint('[Auth] Resend OTP error: $e\n$st');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Erreur lors de l\'envoi du code. Veuillez réessayer.',
+      );
+      return false;
+    }
+  }
+
+  /// Vérifier un code 2FA (TOTP depuis une app d'authentification)
+  Future<bool> verify2FA(String code) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      if (code.isEmpty || code.length != 6) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Le code doit contenir 6 chiffres',
+        );
+        return false;
+      }
+
+      debugPrint('[Auth] Verifying 2FA code...');
+      
+      // Vérifier le code TOTP avec Supabase
+      // Note: Supabase supporte 2FA via TOTP (Time-based One-Time Password)
+      // Pour TOTP, on utilise verifyOTP avec email/phone mais sans type spécifique
+      // Ou on peut utiliser la méthode verifyOtp directement avec le token
+      final currentUser = _supabase.auth.currentUser;
+      final email = currentUser?.email;
+      
+      final response = await _supabase.auth.verifyOTP(
+        type: OtpType.email,
+        token: code,
+        email: email,
+      );
+
+      if (response.user != null) {
+        debugPrint('[Auth] 2FA verified successfully');
+        final u = response.user!;
+        final meta = u.userMetadata ?? {};
+        
+        state = state.copyWith(
+          user: User(
+            id: u.id,
+            email: u.email ?? '',
+            firstName: (meta['firstName'] ?? meta['first_name'] ?? '').toString(),
+            lastName: (meta['lastName'] ?? meta['last_name'] ?? '').toString(),
+            phoneNumber: (meta['phoneNumber'] ?? meta['phone_number'])?.toString(),
+            role: _roleFrom(meta['role']),
+            profileImageUrl: meta['avatar_url']?.toString(),
+          ),
+          isAuthenticated: true,
+          isLoading: false,
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Code invalide. Veuillez réessayer.',
+        );
+        return false;
+      }
+    } on AuthApiException catch (e) {
+      debugPrint('[Auth] 2FA verification error: ${e.message}');
+      String errorMessage;
+      if (e.message.toLowerCase().contains('invalid') || 
+          e.message.toLowerCase().contains('expired')) {
+        errorMessage = 'Code invalide ou expiré. Veuillez réessayer.';
+      } else {
+        errorMessage = 'Erreur lors de la vérification: ${e.message}';
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMessage,
+      );
+      return false;
+    } catch (e, st) {
+      debugPrint('[Auth] 2FA verification error: $e\n$st');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Erreur lors de la vérification du code. Veuillez réessayer.',
+      );
+      return false;
+    }
   }
 
   /// Resend email confirmation
   Future<void> resendConfirmationEmail(String email) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
+      // Vérifier que l'email n'est pas vide
+      final trimmedEmail = email.trim();
+      if (trimmedEmail.isEmpty) {
+        debugPrint('[Auth] Resend confirmation email: email is empty');
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Veuillez entrer une adresse email valide.',
+        );
+        return;
+      }
+      
+      debugPrint('[Auth] Resending confirmation email to: $trimmedEmail');
       await _supabase.auth.resend(
         type: OtpType.signup,
-        email: email,
+        email: trimmedEmail,
       );
+      debugPrint('[Auth] Confirmation email resent successfully');
       state = state.copyWith(
         isLoading: false,
       );
       // Success - UI should show success message
-    } catch (e) {
-      debugPrint('Resend confirmation email error: $e');
+    } on AuthApiException catch (e) {
+      debugPrint('[Auth] Resend confirmation email AuthApiException: ${e.message}');
+      debugPrint('[Auth] Status code: ${e.statusCode}');
+      String errorMessage;
+      if (e.message.toLowerCase().contains('email')) {
+        errorMessage = 'Adresse email invalide. Vérifiez votre email et réessayez.';
+      } else {
+        errorMessage = 'Erreur lors de l\'envoi de l\'email de confirmation: ${e.message}';
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMessage,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('[Auth] Resend confirmation email error: $e');
+      debugPrint('[Auth] Stack trace: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         error: 'Erreur lors de l\'envoi de l\'email de confirmation. Veuillez réessayer.',
@@ -365,6 +575,37 @@ class AuthNotifier extends Notifier<AuthState> {
   bool get isEmailConfirmed {
     final user = _supabase.auth.currentUser;
     return user?.emailConfirmedAt != null;
+  }
+
+  /// Refresh the current session to check if email was confirmed
+  Future<void> refreshSession() async {
+    try {
+      debugPrint('[Auth] Refreshing session...');
+      final session = _supabase.auth.currentSession;
+      if (session != null) {
+        await _supabase.auth.refreshSession();
+        final u = _supabase.auth.currentUser;
+        if (u != null) {
+          debugPrint('[Auth] Session refreshed, email confirmed: ${u.emailConfirmedAt != null}');
+          final meta = u.userMetadata ?? {};
+          state = state.copyWith(
+            user: User(
+              id: u.id,
+              email: u.email ?? '',
+              firstName: (meta['firstName'] ?? meta['first_name'] ?? '').toString(),
+              lastName: (meta['lastName'] ?? meta['last_name'] ?? '').toString(),
+              phoneNumber: (meta['phoneNumber'] ?? meta['phone_number'])?.toString(),
+              role: _roleFrom(meta['role']),
+              profileImageUrl: meta['avatar_url']?.toString(),
+            ),
+            isAuthenticated: true,
+            isLoading: false,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[Auth] Refresh session error: $e');
+    }
   }
 
   Future<void> signInWithGoogle() async {

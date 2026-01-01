@@ -57,11 +57,11 @@ class _SplashScreenState extends State<SplashScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
               children: [
-                        SizedBox(height: isSmallScreen ? 20 : 40),
-                        // Center logo (from assets/images/kol.jpg)
+                        SizedBox(height: isSmallScreen ? 10 : 20),
+                        // Center logo (from assets/images/kol.jpg) - Réduit pour petits écrans
                 Container(
-                          width: isSmallScreen ? 150 : 200,
-                          height: isSmallScreen ? 150 : 200,
+                          width: isSmallScreen ? 100 : 150,
+                          height: isSmallScreen ? 100 : 150,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
@@ -80,30 +80,30 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ).animate().fadeIn(duration: 450.ms).scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 350.ms, curve: Curves.easeOutBack),
                         SizedBox(height: isSmallScreen ? KoogweSpacing.xl : KoogweSpacing.xxxl),
-                // Title
+                // Title - Réduit pour petits écrans
                 Text(
                   "Let's Ride.",
                   style: GoogleFonts.inter(
-                            fontSize: isSmallScreen ? 28 : 34,
+                            fontSize: isSmallScreen ? 22 : 28,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: -0.2,
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(duration: 500.ms, delay: 150.ms).slideY(begin: 0.2, end: 0, duration: 400.ms),
-                        SizedBox(height: isSmallScreen ? KoogweSpacing.md : KoogweSpacing.lg),
-                // Subtitle
+                        SizedBox(height: isSmallScreen ? KoogweSpacing.sm : KoogweSpacing.md),
+                // Subtitle - Réduit
                 Text(
                   AppStrings.appSlogan,
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: isSmallScreen ? 12 : 13,
                     fontWeight: FontWeight.w400,
                     color: Colors.white.withValues(alpha: 0.85),
-                    height: 1.5,
+                    height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(duration: 600.ms, delay: 250.ms).slideY(begin: 0.2, end: 0, duration: 450.ms),
-                        SizedBox(height: isSmallScreen ? KoogweSpacing.xxl : KoogweSpacing.xxxl),
+                        SizedBox(height: isSmallScreen ? KoogweSpacing.lg : KoogweSpacing.xl),
                 // CTA button
                 KoogweButton(
                   text: 'Get started',

@@ -37,7 +37,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       
       if (mounted && ref.read(authProvider).isAuthenticated) {
-        context.go('/passenger/home');
+        final authState = ref.read(authProvider);
+        final user = authState.user;
+        if (user != null) {
+          // Redirect based on user role
+                                        switch (user.role) {
+                                          case UserRole.admin:
+                                            context.go('/admin/dashboard');
+                                            break;
+                                          case UserRole.driver:
+                                            context.go('/driver/home');
+                                            break;
+                                          case UserRole.business:
+                                            context.go('/business/dashboard');
+                                            break;
+                                          case UserRole.passenger:
+                                            context.go('/passenger/home');
+                                            break;
+                                        }
+        } else {
+          context.go('/passenger/home');
+        }
       }
     }
   }
@@ -175,22 +195,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.all(KoogweSpacing.md),
                                     decoration: BoxDecoration(
-                                      color: Colors.amber.withValues(alpha: 0.2),
-                                      border: Border.all(color: Colors.amber),
+                                      color: authState.error!.contains('confirmé') || authState.error!.contains('confirmation')
+                                          ? Colors.blue.withValues(alpha: 0.2)
+                                          : Colors.amber.withValues(alpha: 0.2),
+                                      border: Border.all(
+                                        color: authState.error!.contains('confirmé') || authState.error!.contains('confirmation')
+                                            ? Colors.blue
+                                            : Colors.amber,
+                                      ),
                                       borderRadius: KoogweRadius.mdRadius,
                                     ),
-                                    child: Row(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.info_outline, color: Colors.amber),
-                                        const SizedBox(width: KoogweSpacing.sm),
-                                        Expanded(
-                                          child: Text(
-                                            authState.error == 'google_provider_disabled'
-                                                ? 'google_provider_disabled'.tr()
-                                                : authState.error!,
-                                            style: GoogleFonts.inter(),
-                                          ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              authState.error!.contains('confirmé') || authState.error!.contains('confirmation')
+                                                  ? Icons.email_outlined
+                                                  : Icons.info_outline,
+                                              color: authState.error!.contains('confirmé') || authState.error!.contains('confirmation')
+                                                  ? Colors.blue
+                                                  : Colors.amber,
+                                            ),
+                                            const SizedBox(width: KoogweSpacing.sm),
+                                            Expanded(
+                                              child: Text(
+                                                authState.error == 'google_provider_disabled'
+                                                    ? 'google_provider_disabled'.tr()
+                                                    : authState.error!,
+                                                style: GoogleFonts.inter(),
+                                              ),
+                                            ),
+                                          ],
                                         ),
+                                        if ((authState.error!.contains('confirmé') || authState.error!.contains('confirmation')) && 
+                                            !authState.error!.contains('renvoyer')) ...[
+                                          const SizedBox(height: KoogweSpacing.md),
+                                          KoogweButton(
+                                            text: 'Renvoyer l\'email de confirmation',
+                                            onPressed: () async {
+                                              final messenger = ScaffoldMessenger.of(context);
+                                              await ref.read(authProvider.notifier).resendConfirmationEmail(
+                                                _emailController.text.trim(),
+                                              );
+                                              if (mounted) {
+                                                messenger.showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Email de confirmation renvoyé ! Vérifiez votre boîte de réception.'),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            isFullWidth: true,
+                                            variant: ButtonVariant.outline,
+                                            size: ButtonSize.small,
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -212,9 +274,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   onPressed: () async {
                                     await ref.read(authProvider.notifier).signInWithGoogle();
                                     if (!mounted) return;
-                                    final isAuthenticated = ref.read(authProvider).isAuthenticated;
-                                    if (isAuthenticated && context.mounted) {
-                                      context.go('/passenger/home');
+                                    final authState = ref.read(authProvider);
+                                    if (authState.isAuthenticated && context.mounted) {
+                                      final user = authState.user;
+                                      if (user != null) {
+                                        // Redirect based on user role
+                                        switch (user.role) {
+                                          case UserRole.admin:
+                                            context.go('/admin/dashboard');
+                                            break;
+                                          case UserRole.driver:
+                                            context.go('/driver/home');
+                                            break;
+                                          case UserRole.business:
+                                            context.go('/business/dashboard');
+                                            break;
+                                          case UserRole.passenger:
+                                            context.go('/passenger/home');
+                                            break;
+                                        }
+                                      } else {
+                                        context.go('/passenger/home');
+                                      }
                                     }
                                   },
                                   isFullWidth: true,

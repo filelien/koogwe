@@ -8,6 +8,7 @@ import 'package:koogwe/core/widgets/koogwe_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:koogwe/core/providers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TwoFactorAuthScreen extends ConsumerStatefulWidget {
   const TwoFactorAuthScreen({super.key});
@@ -29,37 +30,68 @@ class _TwoFactorAuthScreenState extends ConsumerState<TwoFactorAuthScreen> {
 
   Future<void> _verify2FA() async {
     if (_codeController.text.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez entrer un code à 6 chiffres')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Veuillez entrer un code à 6 chiffres'),
+            backgroundColor: KoogweColors.error,
+          ),
+        );
+      }
       return;
     }
 
     setState(() => _isLoading = true);
     
     try {
-      // Vérifier le code 2FA via le provider d'authentification
-      // Pour l'instant, simulation - à remplacer par l'appel réel au provider
-      await Future.delayed(const Duration(seconds: 1)); // Simulation
+      bool success;
+      
+      if (_useAuthenticatorApp) {
+        // Vérifier le code TOTP depuis l'app d'authentification
+        success = await ref.read(authProvider.notifier).verify2FA(_codeController.text);
+      } else {
+        // Vérifier le code SMS
+        final authState = ref.read(authProvider);
+        final email = authState.user?.email;
+        final phone = authState.user?.phoneNumber;
+        success = await ref.read(authProvider.notifier).verifyOTP(
+          _codeController.text,
+          email: email,
+          phone: phone,
+        );
+      }
       
       if (mounted) {
-        // Rediriger vers la page appropriée selon le rôle de l'utilisateur connecté
-        final authState = ref.read(authProvider);
-        final userRole = authState.user?.role;
-        if (userRole == UserRole.driver) {
-          context.go('/driver/home');
-        } else if (userRole == UserRole.business) {
-          context.go('/business/dashboard');
-        } else if (userRole == UserRole.admin) {
-          context.go('/admin/dashboard');
+        if (success) {
+          // Rediriger vers la page appropriée selon le rôle
+          final authState = ref.read(authProvider);
+          final userRole = authState.user?.role;
+          if (userRole == UserRole.driver) {
+            context.go('/driver/home');
+          } else if (userRole == UserRole.business) {
+            context.go('/business/dashboard');
+          } else if (userRole == UserRole.admin) {
+            context.go('/admin/dashboard');
+          } else {
+            context.go('/passenger/home');
+          }
         } else {
-          context.go('/passenger/home');
+          final authState = ref.read(authProvider);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authState.error ?? 'Code invalide. Veuillez réessayer.'),
+              backgroundColor: KoogweColors.error,
+            ),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Code invalide. Veuillez réessayer.')),
+          SnackBar(
+            content: Text('Erreur lors de la vérification: $e'),
+            backgroundColor: KoogweColors.error,
+          ),
         );
       }
     } finally {
@@ -70,10 +102,62 @@ class _TwoFactorAuthScreenState extends ConsumerState<TwoFactorAuthScreen> {
   }
 
   Future<void> _resendCode() async {
-    // TODO: Implémenter l'envoi d'un nouveau code
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code renvoyé')),
-    );
+    if (_useAuthenticatorApp) {
+      // Pour TOTP, on ne peut pas renvoyer - l'utilisateur doit utiliser son app
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Utilisez votre application d\'authentification pour obtenir un nouveau code'),
+          backgroundColor: KoogweColors.info,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    try {
+      final authState = ref.read(authProvider);
+      final email = authState.user?.email;
+      final phone = authState.user?.phoneNumber;
+      
+      final success = await ref.read(authProvider.notifier).resendOTP(
+        email: email,
+        phone: phone,
+        type: OtpType.sms,
+      );
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Code renvoyé avec succès'),
+              backgroundColor: KoogweColors.success,
+            ),
+          );
+        } else {
+          final authState = ref.read(authProvider);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authState.error ?? 'Erreur lors de l\'envoi du code'),
+              backgroundColor: KoogweColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: KoogweColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override

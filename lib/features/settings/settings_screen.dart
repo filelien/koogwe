@@ -72,42 +72,50 @@ class SettingsScreen extends ConsumerWidget {
           SettingsSection(
             title: 'account'.tr(),
             children: [
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: Text(AppStrings.profile),
-                onTap: () {
-                  // Rediriger vers le profil utilisateur selon le rôle
-                  final authState = ref.read(authProvider);
-                  if (authState.user?.role == UserRole.passenger) {
-                    context.push('/passenger/profile');
-                  } else if (authState.user?.role == UserRole.driver) {
-                    context.push('/driver/profile');
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Profil - Fonctionnalité à venir pour ${authState.user?.role.name ?? "ce rôle"}')),
-                    );
-                  }
+              Builder(
+                builder: (context) {
+                  final authState = ref.watch(authProvider);
+                  final userRole = authState.user?.role;
+                  
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.person),
+                        title: Text(AppStrings.profile),
+                        onTap: () {
+                          // Rediriger vers le profil utilisateur selon le rôle
+                          if (userRole == UserRole.passenger) {
+                            context.push('/passenger/profile');
+                          } else if (userRole == UserRole.driver) {
+                            context.push('/driver/profile');
+                          } else if (userRole == UserRole.admin) {
+                            context.push('/admin/dashboard');
+                          } else if (userRole == UserRole.business) {
+                            context.push('/business/dashboard');
+                          }
+                        },
+                      ),
+                      const Divider(height: 0),
+                      ListTile(
+                        leading: const Icon(Icons.dashboard),
+                        title: const Text('Accéder aux dashboards'),
+                        subtitle: const Text('Basculer entre les vues selon votre rôle'),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () => _showDashboardSelector(context, ref),
+                      ),
+                    ],
+                  );
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.security),
                 title: Text('security'.tr()),
-                onTap: () {
-                  // TODO: Implémenter écran de sécurité
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Paramètres de sécurité - Fonctionnalité à venir')),
-                  );
-                },
+                onTap: () => context.push('/settings/security'),
               ),
               ListTile(
                 leading: const Icon(Icons.privacy_tip),
                 title: Text('privacy'.tr()),
-                onTap: () {
-                  // TODO: Implémenter écran de confidentialité
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Paramètres de confidentialité - Fonctionnalité à venir')),
-                  );
-                },
+                onTap: () => context.push('/settings/privacy'),
               ),
               ListTile(
                 leading: const Icon(Icons.description),
@@ -240,6 +248,103 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  void _showDashboardSelector(BuildContext context, WidgetRef ref) {
+    final authState = ref.read(authProvider);
+    final currentRole = authState.user?.role;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? KoogweColors.darkSurface : KoogweColors.lightSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(KoogweSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sélectionner un dashboard',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary,
+              ),
+            ),
+            const SizedBox(height: KoogweSpacing.lg),
+            _DashboardOption(
+              icon: Icons.person,
+              title: 'Passager',
+              subtitle: 'Réservation et suivi de trajets',
+              color: KoogweColors.primary,
+              isCurrent: currentRole == UserRole.passenger,
+              onTap: () {
+                context.pop();
+                context.go('/passenger/home');
+              },
+            ),
+            const SizedBox(height: KoogweSpacing.md),
+            _DashboardOption(
+              icon: Icons.drive_eta,
+              title: 'Chauffeur',
+              subtitle: 'Gestion des courses et revenus',
+              color: KoogweColors.secondary,
+              isCurrent: currentRole == UserRole.driver,
+              onTap: () {
+                context.pop();
+                if (currentRole == UserRole.driver || currentRole == UserRole.admin) {
+                  context.go('/driver/home');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Accès réservé aux chauffeurs')),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: KoogweSpacing.md),
+            _DashboardOption(
+              icon: Icons.business,
+              title: 'Entreprise',
+              subtitle: 'Gestion des trajets professionnels',
+              color: KoogweColors.accent,
+              isCurrent: currentRole == UserRole.business,
+              onTap: () {
+                context.pop();
+                if (currentRole == UserRole.business || currentRole == UserRole.admin) {
+                  context.go('/business/dashboard');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Accès réservé aux entreprises')),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: KoogweSpacing.md),
+            _DashboardOption(
+              icon: Icons.admin_panel_settings,
+              title: 'Administrateur',
+              subtitle: 'Gestion complète de la plateforme',
+              color: KoogweColors.error,
+              isCurrent: currentRole == UserRole.admin,
+              onTap: () {
+                context.pop();
+                if (currentRole == UserRole.admin) {
+                  context.go('/admin/dashboard');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Accès réservé aux administrateurs')),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _confirmLogout(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
@@ -306,6 +411,82 @@ class KoogweLogoutButton extends StatelessWidget {
       customColor: Colors.redAccent,
       onPressed: onConfirm,
       size: ButtonSize.large,
+    );
+  }
+}
+
+class _DashboardOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final bool isCurrent;
+  final VoidCallback onTap;
+
+  const _DashboardOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.isCurrent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: KoogweRadius.lgRadius,
+      child: Container(
+        padding: const EdgeInsets.all(KoogweSpacing.md),
+        decoration: BoxDecoration(
+          color: isCurrent ? color.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: KoogweRadius.lgRadius,
+          border: Border.all(
+            color: isCurrent ? color : KoogweColors.lightBorder,
+            width: isCurrent ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: KoogweSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? KoogweColors.darkTextPrimary : KoogweColors.lightTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: isDark ? KoogweColors.darkTextSecondary : KoogweColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isCurrent)
+              Icon(Icons.check_circle, color: color),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,13 +1,13 @@
 /// Centralized environment configuration for KOOGWE.
 ///
 /// Reads from --dart-define when available. Primary keys are the standard
-/// SUPABASE_URL and SUPABASE_ANON_KEY used by Dreamflow's Supabase module.
+/// SUPABASE_URL and SUPABASE_ANON_KEY.
 /// We also accept EXPO_PUBLIC_* as fallback for compatibility. If none are
 /// provided, we use a safe default so the app can boot, but auth will fail
 /// until real values are injected.
 class Env {
   // --- Supabase ---
-  // Primary names (Dreamflow Supabase integration)
+  // Primary names for Supabase integration
   static const _supabaseUrlPrimary = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
   static const _supabaseAnonPrimary = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
   // Fallback (legacy/expo style)

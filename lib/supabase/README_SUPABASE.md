@@ -86,7 +86,7 @@ Future<void> main() async {
 - **supabase_tables.sql** - Complete database schema
 - **supabase_policies.sql** - Row-Level Security (RLS) policies
 
-**To deploy**: Use the Supabase panel in the left sidebar of Dreamflow.
+**To deploy**: Use the Supabase Dashboard SQL Editor.
 
 ## 🔐 Authentication
 
@@ -401,7 +401,7 @@ Supabase projects have email confirmation enabled by default. For testing:
 
 1. Verify Supabase URL and anon key in `lib/core/config/env.dart`
 2. Check if tables exist in Supabase Dashboard
-3. Deploy SQL migrations using Supabase panel in Dreamflow
+3. Deploy SQL migrations using Supabase Dashboard SQL Editor
 4. Verify RLS policies are applied
 
 ## 📚 Additional Resources
@@ -412,7 +412,7 @@ Supabase projects have email confirmation enabled by default. For testing:
 
 ## 🎯 Next Steps
 
-1. **Deploy Migrations**: Use Supabase panel in Dreamflow to deploy SQL migrations
+1. **Deploy Migrations**: Use Supabase Dashboard SQL Editor to deploy SQL migrations
 2. **Enable Google OAuth**: Configure Google provider in Supabase Dashboard
 3. **Test Authentication**: Try login, registration, and Google OAuth
 4. **Generate Sample Data**: Use Supabase panel to add sample data for testing

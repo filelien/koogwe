@@ -391,8 +391,9 @@ class _PriceNegotiationScreenState extends ConsumerState<PriceNegotiationScreen>
             text: 'Confirmer la course',
             icon: Icons.check_circle,
             onPressed: () {
-              // TODO: Rediriger vers la confirmation de course
+              // Rediriger vers la confirmation de course
               context.pop();
+              context.push('/passenger/ride-preview');
             },
             isFullWidth: true,
             size: ButtonSize.large,

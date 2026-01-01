@@ -4,6 +4,8 @@ import 'package:koogwe/core/constants/app_colors.dart';
 import 'package:koogwe/core/constants/app_spacing.dart';
 import 'package:koogwe/core/services/supabase_service.dart';
 import 'package:koogwe/core/widgets/koogwe_button.dart';
+import 'package:koogwe/core/config/env.dart';
+import 'package:koogwe/core/widgets/supabase_status_widget.dart';
 
 class SupabaseTestScreen extends StatefulWidget {
   const SupabaseTestScreen({super.key});
@@ -49,6 +51,76 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
                 ),
               ),
               const SizedBox(height: KoogweSpacing.xl),
+
+              // Widget de statut Supabase
+              const SupabaseStatusWidget(),
+              const SizedBox(height: KoogweSpacing.lg),
+
+              // Configuration actuelle
+              Container(
+                padding: const EdgeInsets.all(KoogweSpacing.md),
+                decoration: BoxDecoration(
+                  color: isDark ? KoogweColors.darkSurface : KoogweColors.lightSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? KoogweColors.darkBorder : KoogweColors.lightBorder,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Configuration actuelle',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: KoogweSpacing.sm),
+                    Text(
+                      'URL: ${Env.supabaseUrl.isEmpty ? "NON CONFIGURÉE" : Env.supabaseUrl}',
+                      style: GoogleFonts.robotoMono(
+                        fontSize: 12,
+                        color: isDark ? KoogweColors.darkTextSecondary : KoogweColors.lightTextSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Key: ${Env.supabaseAnonKey.isEmpty ? "NON CONFIGURÉE" : "${Env.supabaseAnonKey.substring(0, Env.supabaseAnonKey.length > 30 ? 30 : Env.supabaseAnonKey.length)}..."}',
+                      style: GoogleFonts.robotoMono(
+                        fontSize: 12,
+                        color: isDark ? KoogweColors.darkTextSecondary : KoogweColors.lightTextSecondary,
+                      ),
+                    ),
+                    if (Env.supabaseUrl.isEmpty || Env.supabaseAnonKey.isEmpty) ...[
+                      const SizedBox(height: KoogweSpacing.md),
+                      Container(
+                        padding: const EdgeInsets.all(KoogweSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: KoogweColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning, color: KoogweColors.error, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '⚠️ Configurez vos clés Supabase dans lib/core/config/env.dart',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: KoogweColors.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: KoogweSpacing.lg),
 
               // Boutons de test
               KoogweButton(
@@ -185,9 +257,8 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
             const SizedBox(height: KoogweSpacing.xs),
             Text(
               result.details,
-              style: TextStyle(
+              style: GoogleFonts.robotoMono(
                 fontSize: 12,
-                fontFamily: 'monospace',
                 color: isDark ? KoogweColors.darkTextTertiary : KoogweColors.lightTextTertiary,
               ),
             ),
